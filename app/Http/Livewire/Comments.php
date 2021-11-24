@@ -5,13 +5,21 @@ namespace App\Http\Livewire;
 use App\Models\Comment;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Intervention\Image\ImageManagerStatic;
+use Str;
 
 class Comments extends Component
 {
     // public $comments;
-    public $newComment;
+    public $newComment, $image;
+    protected $listeners = ['fileUpload' => 'handleFileUpload'];
 
     use WithPagination;
+
+    public function handleFileUpload($imageData)
+    {
+        $this->image = $imageData;
+    }
 
     public function mount()
     {
@@ -30,11 +38,27 @@ class Comments extends Component
         // if ($this->newComment == '') return;
 
         $this->validate(['newComment' => "required|max:255"]);
+        $image = $this->storeImage();
 
-        $createdComment = Comment::create(['body' => $this->newComment, 'user_id' => 1,]);
+        $createdComment = Comment::create([
+            'body' => $this->newComment,
+            'user_id' => 1,
+            'image' => $image,
+        ]);
         // $this->comments->prepend($createdComment);
         $this->newComment = '';
+        $this->image = '';
         session()->flash('message', 'Comment added Succefully!');
+    }
+
+    public function storeImage()
+    {
+        if (!$this->image) return null;
+        return $this->$this->photo->store('photos');
+        // $img = ImageManagerStatic::make($this->image)->encode('jpg');
+        // $name = Str::random() . '.jpg';
+        // Storage::disk('public')->put($name,$img);
+        // return $name;
     }
 
     public function remove($commentId)
